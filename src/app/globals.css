@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #E6E6E3;
+  --bg-surface: #DCDCD8;
+  --bg-dark: #141413;
+  --text-primary: #141413;
+  --text-muted: #63635E;
+  --accent-safety: #FF4D00;
+  --border-hairline: #BDBDB7;
+  --font-space-grotesk: "Space Grotesk", sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-space-grotesk);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* Technical Telemetry Tabular Numbers */
+.font-mono,
+.tabular-nums {
+  font-family: var(--font-jetbrains-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hairline Grid Utilities */
+.border-hairline {
+  border: 1px solid var(--border-hairline);
+}
+
+.border-b-hairline {
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.border-t-hairline {
+  border-top: 1px solid var(--border-hairline);
+}
+
+.border-r-hairline {
+  border-right: 1px solid var(--border-hairline);
+}
+
+.border-l-hairline {
+  border-left: 1px solid var(--border-hairline);
+}
+
+/* Strict Anti-AI Slop: No blurry glow, no high border-radius */
+button,
+input,
+select {
+  border-radius: 0;
+}
