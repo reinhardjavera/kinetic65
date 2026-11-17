@@ -281,6 +281,7 @@ export const KeyboardAssembly: React.FC = () => {
             color={chassisFinish.hex}
             metalness={chassisFinish.metalness}
             roughness={chassisFinish.roughness}
+            envMapIntensity={0.65}
           />
         </mesh>
 
@@ -297,6 +298,7 @@ export const KeyboardAssembly: React.FC = () => {
             color={chassisFinish.hex}
             metalness={chassisFinish.metalness}
             roughness={chassisFinish.roughness}
+            envMapIntensity={0.65}
           />
         </mesh>
 

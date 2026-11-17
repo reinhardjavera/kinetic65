@@ -38,9 +38,9 @@ export const CHASSIS_FINISHES: Record<
 > = {
   "anodized-silver": {
     name: "ANODIZED RAW SILVER",
-    hex: "#C8C8C4",
-    metalness: 0.85,
-    roughness: 0.25,
+    hex: "#B8B8B2",
+    metalness: 0.45,
+    roughness: 0.48,
     desc: "Bead-blasted 6063 Aluminum with clear anodization",
   },
   "matte-obsidian": {

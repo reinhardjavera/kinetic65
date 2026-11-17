@@ -398,3 +398,78 @@ export function getBrushedBrassTexture(): THREE.CanvasTexture {
   cachedBrassTexture = texture;
   return texture;
 }
+
+const cachedWideKeyTextures: Record<string, THREE.CanvasTexture> = {};
+
+/**
+ * Creates an aspect-ratio-accurate canvas texture for wide keys (Spacebar 6.25u)
+ * so that typography like "KINETIC-65" remains perfectly proportioned and sharp.
+ */
+export function getWideKeyTexture(
+  themeKey: KeycapTheme,
+  label: string,
+  aspectRatio: number
+): THREE.CanvasTexture {
+  const cacheKey = `${themeKey}_${label}_${aspectRatio.toFixed(2)}`;
+  if (cachedWideKeyTextures[cacheKey]) {
+    return cachedWideKeyTextures[cacheKey];
+  }
+
+  if (typeof document === "undefined") {
+    return new THREE.CanvasTexture({} as HTMLCanvasElement);
+  }
+
+  const baseH = 256;
+  const baseW = Math.round(baseH * aspectRatio); // e.g. 256 * 6.25 = 1600px width
+
+  const canvas = document.createElement("canvas");
+  canvas.width = baseW;
+  canvas.height = baseH;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  const theme = KEYCAP_THEMES[themeKey];
+  const bg = theme.accentColor;
+  const fg = "#FFFFFF";
+
+  // Solid background
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, baseW, baseH);
+
+  // Subtle PBT texture noise
+  for (let py = 0; py < baseH; py += 3) {
+    for (let px = 0; px < baseW; px += 3) {
+      if (Math.random() > 0.6) {
+        const shade = (Math.random() - 0.5) * 16;
+        ctx.fillStyle =
+          shade > 0
+            ? `rgba(255, 255, 255, ${Math.min(0.08, shade / 100)})`
+            : `rgba(0, 0, 0, ${Math.min(0.08, -shade / 100)})`;
+        ctx.fillRect(px, py, 3, 3);
+      }
+    }
+  }
+
+  // Hairline frame
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(8, 8, baseW - 16, baseH - 16);
+
+  // Centered crisp typography with proper aspect ratio
+  ctx.fillStyle = fg;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = 'bold 44px "JetBrains Mono", monospace';
+  ctx.fillText(label, baseW / 2, baseH / 2 + 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
+  texture.needsUpdate = true;
+
+  cachedWideKeyTextures[cacheKey] = texture;
+  return texture;
+}

@@ -94,6 +94,15 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({
         {/* 100% Procedural Studio Lightformer Environment (Zero External HDR) */}
         <Environment resolution={256}>
           <group rotation={[-Math.PI / 4, -0.4, 0]}>
+            {/* Ambient Overhead Fill Lightformer to eliminate black/empty zenith reflections */}
+            <Lightformer
+              form="ring"
+              intensity={0.8}
+              color="#F5F5F2"
+              scale={20}
+              position={[0, 10, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+            />
             {/* Large Overhead Softbox */}
             <Lightformer
               form="rect"

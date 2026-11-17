@@ -14,6 +14,7 @@ import {
 import {
   getPbtMicrograinTexture,
   getKeycapAtlasTexture,
+  getWideKeyTexture,
   ATLAS_COLS,
   ATLAS_ROWS,
 } from "./ProceduralTextures";
@@ -74,31 +75,36 @@ function createSolidKeycapGeometry(
 
 /**
  * Creates a flat legend plane that sits exactly on top of the keycap
- * with UVs mapped to the corresponding keycap legend slot in the atlas.
+ * with UVs mapped to the corresponding keycap legend slot in the atlas
+ * (or standard 0-1 UVs for wide keys using a dedicated texture).
  */
 function createLegendPlaneGeometry(
   topWidth: number,
   topDepth: number,
-  slotIndex: number
+  slotIndex: number,
+  isWideKey: boolean = false
 ): THREE.BufferGeometry {
-  const col = slotIndex % ATLAS_COLS;
-  const row = Math.floor(slotIndex / ATLAS_COLS);
-
-  const uMin = col / ATLAS_COLS;
-  const uMax = (col + 1) / ATLAS_COLS;
-  const vMin = 1.0 - (row + 1) / ATLAS_ROWS;
-  const vMax = 1.0 - row / ATLAS_ROWS;
-
   const geom = new THREE.PlaneGeometry(topWidth, topDepth);
   geom.rotateX(-Math.PI * 0.5);
 
-  const uvAttr = geom.attributes.uv;
-  for (let i = 0; i < uvAttr.count; i++) {
-    const u = uvAttr.getX(i);
-    const v = uvAttr.getY(i);
-    uvAttr.setXY(i, uMin + u * (uMax - uMin), vMin + v * (vMax - vMin));
+  if (!isWideKey) {
+    const col = slotIndex % ATLAS_COLS;
+    const row = Math.floor(slotIndex / ATLAS_COLS);
+
+    const uMin = col / ATLAS_COLS;
+    const uMax = (col + 1) / ATLAS_COLS;
+    const vMin = 1.0 - (row + 1) / ATLAS_ROWS;
+    const vMax = 1.0 - row / ATLAS_ROWS;
+
+    const uvAttr = geom.attributes.uv;
+    for (let i = 0; i < uvAttr.count; i++) {
+      const u = uvAttr.getX(i);
+      const v = uvAttr.getY(i);
+      uvAttr.setXY(i, uMin + u * (uMax - uMin), vMin + v * (vMax - vMin));
+    }
+    uvAttr.needsUpdate = true;
   }
-  uvAttr.needsUpdate = true;
+
   return geom;
 }
 
@@ -108,6 +114,7 @@ interface SingleKeycapProps {
   atlasTexture: THREE.CanvasTexture;
   bumpTexture: THREE.CanvasTexture;
   baseColor: string;
+  themeKey: import("@/store/useConfiguratorStore").KeycapTheme;
   isPressed: boolean;
   onPress: (code: string) => void;
   onRelease: (code: string) => void;
@@ -119,12 +126,23 @@ const SingleKeycap: React.FC<SingleKeycapProps> = ({
   atlasTexture,
   bumpTexture,
   baseColor,
+  themeKey,
   isPressed,
   onPress,
   onRelease,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const currentYOffset = useRef(0);
+
+  const isWideKey = keyDef.width >= 3.0; // Spacebar (6.25u)
+
+  // Dedicated aspect-ratio-accurate texture for Spacebar to prevent stretching
+  const activeTexture = useMemo(() => {
+    if (isWideKey) {
+      return getWideKeyTexture(themeKey, keyDef.label, keyDef.width);
+    }
+    return atlasTexture;
+  }, [isWideKey, themeKey, keyDef.label, keyDef.width, atlasTexture]);
 
   // 1. Watertight solid body
   const bodyGeometry = useMemo(() => {
@@ -140,9 +158,10 @@ const SingleKeycap: React.FC<SingleKeycapProps> = ({
     return createLegendPlaneGeometry(
       keyDef.physicalWidth * 0.81,
       keyDef.physicalDepth * 0.81,
-      slotIndex
+      slotIndex,
+      isWideKey
     );
-  }, [keyDef.physicalWidth, keyDef.physicalDepth, slotIndex]);
+  }, [keyDef.physicalWidth, keyDef.physicalDepth, slotIndex, isWideKey]);
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
@@ -193,7 +212,7 @@ const SingleKeycap: React.FC<SingleKeycapProps> = ({
           receiveShadow
         >
           <meshStandardMaterial
-            map={atlasTexture}
+            map={activeTexture}
             roughness={0.78}
             metalness={0.05}
             envMapIntensity={0.4}
@@ -240,6 +259,7 @@ export const KeycapMatrix: React.FC = () => {
             atlasTexture={atlasTexture}
             bumpTexture={bumpTexture}
             baseColor={baseColor}
+            themeKey={keycapTheme}
             isPressed={activeKeys.includes(key.code)}
             onPress={pressKey}
             onRelease={releaseKey}
